@@ -1,0 +1,16 @@
+{
+    "version": 2,
+    "builds": [
+      {
+        "src": "api/generate-ticket.ts",
+        "use": "@vercel/node"
+      }
+    ],
+    "routes": [
+      {
+        "src": "/api/generate-ticket",
+        "dest": "api/generate-ticket.ts"
+      }
+    ],
+    "public": "public"
+  }
