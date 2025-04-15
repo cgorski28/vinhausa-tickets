@@ -2,6 +2,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createCanvas, loadImage } from 'canvas';
 import QRCode from 'qrcode';
 import path from 'path';
+import fs from 'fs';
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -33,11 +34,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const buffer = canvas.toBuffer('image/png');
 
+    const html = fs.readFileSync(
+      path.resolve(__dirname, '../emails/event-confirmation.html'),
+      'utf-8'
+    );
+
     await resend.emails.send({
       from: 'tickets@downdawgs.com',
       to: email,
       subject: 'Your Ticket 🎟️',
-      html: `<p>Hi ${name}, your ticket is attached. See you there!</p>`,
+      html,
       attachments: [
         {
           filename: 'ticket.png',
