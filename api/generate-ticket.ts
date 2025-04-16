@@ -1,11 +1,15 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { createCanvas, loadImage } from 'canvas';
+import { createCanvas, loadImage , registerFont} from 'canvas';
 import QRCode from 'qrcode';
 import path from 'path';
 import fs from 'fs';
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+registerFont(path.join(process.cwd(), 'fonts', 'SpecialGothic-Regular.ttf'), {
+  family: 'Special Gothic'
+});
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
@@ -28,7 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const qrImg = await loadImage(qrDataUrl);
     ctx.drawImage(qrImg, 100, 100, 150, 150); // adjust
 
-    ctx.font = 'bold 40px Sans';
+    ctx.font = 'bold 40px "Special Gothic"';
     ctx.fillStyle = '#ffffff';
     ctx.fillText(name, 100, 300); // adjust
 
