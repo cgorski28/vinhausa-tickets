@@ -20,7 +20,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const bgPath = path.join(process.cwd(), 'public', 'ticket-template.jpg');
+    const bgPath = path.join(process.cwd(), 'public', 'ticket-template-final.png');
     const bgImage = await loadImage(bgPath);
 
     const canvas = createCanvas(bgImage.width, bgImage.height);
@@ -28,13 +28,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     ctx.drawImage(bgImage, 0, 0);
 
-    const qrDataUrl = await QRCode.toDataURL(`https://yourdomain.com/checkin/${ticketId}`);
+    const qrDataUrl = await QRCode.toDataURL(`https://vinhausa.us/`);
     const qrImg = await loadImage(qrDataUrl);
-    ctx.drawImage(qrImg, 100, 100, 150, 150); // adjust
+    ctx.drawImage(qrImg, 375, 710, 325, 325);
 
-    ctx.font = 'bold 40px "Special Gothic"';
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText(name, 100, 300); // adjust
+    // ctx.font = 'bold 40px "Special Gothic"';
+    // ctx.fillStyle = '#ffffff';
+    // ctx.fillText(name, 100, 300); // adjust
 
     const buffer = canvas.toBuffer('image/png');
 
@@ -46,7 +46,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await resend.emails.send({
       from: 'tickets@downdawgs.com',
       to: email,
-      subject: 'Your Ticket 🎟️',
+      subject: 'Welcome to Vinhausa',
       html,
       attachments: [
         {
