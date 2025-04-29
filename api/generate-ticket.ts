@@ -7,6 +7,24 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// Configuration map for templates and their corresponding images
+interface TemplateConfig {
+  image: string;
+  subject: string;
+}
+
+const TEMPLATE_CONFIG: Record<string, TemplateConfig> = {
+  'event-confirmation': {
+    image: 'ticket-template-final.png',
+    subject: 'Welcome to Vinhausa'
+  },
+  // Add more templates here as needed, for example:
+  // 'vip-confirmation': {
+  //   image: 'vip-ticket-template.png',
+  //   subject: 'VIP Welcome to Vinhausa'
+  // }
+};
+
 registerFont(path.join(process.cwd(), 'fonts', 'SpecialGothic-Regular.ttf'), {
   family: 'Special Gothic'
 });
@@ -14,15 +32,26 @@ registerFont(path.join(process.cwd(), 'fonts', 'SpecialGothic-Regular.ttf'), {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
 
-  const { name, email, ticketId } = req.body;
+  const { name, email, ticketId, template = 'event-confirmation' } = req.body;
   if (!name || !email || !ticketId) {
     return res.status(400).json({ error: 'Missing name, email, or ticketId' });
   }
 
-  try {
-    const bgPath = path.join(process.cwd(), 'public', 'ticket-template-final.png');
-    const bgImage = await loadImage(bgPath);
+  // Validate template exists in our configuration
+  if (!TEMPLATE_CONFIG[template]) {
+    return res.status(400).json({ error: `Template '${template}' not found in configuration` });
+  }
 
+  try {
+    const templateConfig = TEMPLATE_CONFIG[template];
+    const bgPath = path.join(process.cwd(), 'public', templateConfig.image);
+    
+    // Verify the image exists
+    if (!fs.existsSync(bgPath)) {
+      return res.status(400).json({ error: `Image '${templateConfig.image}' not found` });
+    }
+
+    const bgImage = await loadImage(bgPath);
     const canvas = createCanvas(bgImage.width, bgImage.height);
     const ctx = canvas.getContext('2d');
 
@@ -38,15 +67,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const buffer = canvas.toBuffer('image/png');
 
-    const html = fs.readFileSync(
-      path.resolve(__dirname, '../emails/event-confirmation.html'),
-      'utf-8'
-    );
+    // Load the specified template
+    const templatePath = path.resolve(__dirname, `../emails/${template}.html`);
+    
+    // Check if template exists
+    if (!fs.existsSync(templatePath)) {
+      return res.status(400).json({ error: `Template '${template}' not found` });
+    }
+
+    const html = fs.readFileSync(templatePath, 'utf-8');
 
     await resend.emails.send({
       from: 'tickets@downdawgs.com',
       to: email,
-      subject: 'Welcome to Vinhausa',
+      subject: templateConfig.subject,
       html,
       attachments: [
         {
