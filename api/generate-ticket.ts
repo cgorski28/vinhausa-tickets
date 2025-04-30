@@ -18,21 +18,20 @@ const TEMPLATE_CONFIG: Record<string, TemplateConfig> = {
     image: 'ticket-template-final.png',
     subject: 'Welcome to Vinhausa'
   },
-  // Add more templates here as needed, for example:
-  // 'vip-confirmation': {
-  //   image: 'vip-ticket-template.png',
-  //   subject: 'VIP Welcome to Vinhausa'
-  // }
+  'contrast': {
+    image: 'cold-yoga.png',
+    subject: 'Your Cold Yoga Ticket - May 4 | 9:30 AM'
+  }
 };
 
-registerFont(path.join(process.cwd(), 'fonts', 'SpecialGothic-Regular.ttf'), {
-  family: 'Special Gothic'
+registerFont(path.join(process.cwd(), 'fonts', 'Garamond.ttf'), {
+  family: 'Garamond'
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
 
-  const { name, email, ticketId, template = 'event-confirmation' } = req.body;
+  const { name, email, ticketId, template = 'event-confirmation', includeQr = true } = req.body;
   if (!name || !email || !ticketId) {
     return res.status(400).json({ error: 'Missing name, email, or ticketId' });
   }
@@ -57,13 +56,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     ctx.drawImage(bgImage, 0, 0);
 
-    const qrDataUrl = await QRCode.toDataURL(`https://vinhausa.us/`);
-    const qrImg = await loadImage(qrDataUrl);
-    ctx.drawImage(qrImg, 375, 710, 325, 325);
+    if (includeQr) {
+      const qrDataUrl = await QRCode.toDataURL(`https://vinhausa.us/`);
+      const qrImg = await loadImage(qrDataUrl);
+      ctx.drawImage(qrImg, 375, 710, 325, 325);
+    }
 
-    // ctx.font = 'bold 40px "Special Gothic"';
-    // ctx.fillStyle = '#ffffff';
-    // ctx.fillText(name, 100, 300); // adjust
+    ctx.font = 'Bold 80px Garamond';
+    ctx.fillStyle = '#37498a';
+    ctx.textAlign = 'center';
+    ctx.fillText(name, 540, 1580); // adjust
 
     const buffer = canvas.toBuffer('image/png');
 
@@ -78,7 +80,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const html = fs.readFileSync(templatePath, 'utf-8');
 
     await resend.emails.send({
-      from: 'tickets@downdawgs.com',
+      from: 'noreply@downdawgs.com',
       to: email,
       subject: templateConfig.subject,
       html,
